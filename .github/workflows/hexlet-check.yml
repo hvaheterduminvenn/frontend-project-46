@@ -20,8 +20,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Hexlet project check
-        uses: hexlet/project-action@release
+      - name: Use Node.js
+        uses: actions/setup-node@v3
         with:
-          hexlet-id: ${{ secrets.HEXLET_ID }}
+          node-version: '16.x'
+      - run: npm install
+      - run: make lint
+      - name: run tests
+        run: npm test
