@@ -4,7 +4,7 @@ const getDifference = (file1data, file2data) => {
   const difference = [];
 
   Object.entries(data1).forEach(([key1, value1]) => {
-    if (data2.key1 !== undefined) {
+    if (data2[key1] !== undefined) {
       if (value1 === data2[key1]) {
         difference.push(`${key1}: ${value1} 3`);
       } else {
