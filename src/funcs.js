@@ -1,3 +1,36 @@
+import fs from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
+
+const getFileData = (filepath = '') => {
+  let content;
+
+  try {
+    const resolvedPath = path.resolve(filepath);
+    const fileExtension = path.extname(resolvedPath);
+    switch (fileExtension) {
+      case '.json': {
+        const jsonData = fs.readFileSync(resolvedPath, { encoding: 'utf8', flag: 'r' });
+        content = JSON.parse(jsonData);
+        break;
+      }
+      case '.yml':
+      case '.yaml': {
+        content = yaml.load(fs.readFileSync(resolvedPath, { encoding: 'utf8', flag: 'r' }));
+        break;
+      }
+      default:
+        throw new Error(`Can not parse ${fileExtension} file extension!`);
+    }
+  } catch (err) {
+    console.log(err.message);
+    throw err;
+    // return err;
+  }
+
+  return content;
+};
+
 const getDifference = (file1data, file2data) => {
   const data1 = { ...file1data };
   const data2 = { ...file2data };
@@ -42,4 +75,4 @@ const getDifference = (file1data, file2data) => {
   return difference;
 };
 
-export default getDifference;
+export { getDifference, getFileData };

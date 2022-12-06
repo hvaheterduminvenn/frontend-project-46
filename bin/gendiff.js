@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-import fs from 'fs';
-import { resolve } from 'path';
 import { Command } from 'commander';
-import getDifference from '../src/funcs.js';
+import { getDifference, getFileData } from '../src/funcs.js';
 
 const program = new Command();
 
@@ -13,26 +11,8 @@ program
   .arguments('<filepath1> <filepath2>')
   .option('-f, --format <type>', 'output format')
   .action((filepath1, filepath2) => {
-    let file1data;
-    let file2data;
-
-    try {
-      const path1 = resolve(filepath1);
-      const file1dataStr = fs.readFileSync(path1, { encoding: 'utf8', flag: 'r' });
-      file1data = JSON.parse(file1dataStr);
-    } catch (err) {
-      console.error(err.message);
-      return;
-    }
-
-    try {
-      const path2 = resolve(filepath2);
-      const file2dataStr = fs.readFileSync(path2, { encoding: 'utf8', flag: 'r' });
-      file2data = JSON.parse(file2dataStr);
-    } catch (err) {
-      console.error(err.message);
-      return;
-    }
+    const file1data = getFileData(filepath1);
+    const file2data = getFileData(filepath2);
 
     const difference = getDifference(file1data, file2data);
 
