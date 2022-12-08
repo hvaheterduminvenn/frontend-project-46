@@ -2,27 +2,28 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { getDifference, getFileData } from '../src/funcs.js';
 
-const file1 = {
+const file = {
   host: 'hexlet.io',
   timeout: 50,
   proxy: '123.234.53.22',
   follow: false,
 };
-const file2 = {
-  timeout: 20,
-  verbose: true,
-  host: 'hexlet.io',
-};
 
 describe('getDifference', () => {
   test('check files comparison', () => {
+    const fileName = fileURLToPath(import.meta.url);
+    const dirname = path.dirname(fileName);
+    const getFixturePath = (filename) => path.join(dirname, '..', '__fixtures__', filename);
+    const file1 = getFileData(getFixturePath('file3.json'));
+    const file2 = getFileData(getFixturePath('file4.json'));
+
     expect(getDifference(file1, file2)).toEqual([
-      'follow: false 1',
-      'host: hexlet.io 3',
-      'proxy: 123.234.53.22 1',
-      'timeout: 50 1',
-      'timeout: 20 2',
-      'verbose: true 2',
+      ['- follow', false],
+      ['  host', 'hexlet.io'],
+      ['- proxy', '123.234.53.22'],
+      ['- timeout', 50],
+      ['+ timeout', 20],
+      ['+ verbose', true],
     ]);
   });
 
@@ -35,9 +36,9 @@ describe('getFileData', () => {
   test('return file data', () => {
     const fileName = fileURLToPath(import.meta.url);
     const dirname = path.dirname(fileName);
-    const getFixturePath = (filename) => path.join(dirname, '..', 'src', filename);
+    const getFixturePath = (filename) => path.join(dirname, '..', '__fixtures__', filename);
 
-    expect(getFileData(getFixturePath('file1.yml'))).toEqual(file1);
+    expect(getFileData(getFixturePath('file1.yml'))).toEqual(file);
   });
 
   test('throw Error for a wrong file path', () => {

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
+import _ from 'lodash';
 
 const getFileData = (filepath = '') => {
   let content;
@@ -31,48 +32,70 @@ const getFileData = (filepath = '') => {
   return content;
 };
 
-const getDifference = (file1data, file2data) => {
-  const data1 = { ...file1data };
-  const data2 = { ...file2data };
-  const difference = [];
-
-  Object.entries(data1).forEach(([key1, value1]) => {
-    if (data2[key1] !== undefined) {
-      if (value1 === data2[key1]) {
-        difference.push(`${key1}: ${value1} 3`);
-      } else {
-        difference.push(`${key1}: ${value1} 1`);
-        difference.push(`${key1}: ${data2[key1]} 2`);
-      }
-      delete data2[key1];
-    } else {
-      difference.push(`${key1}: ${value1} 1`);
-    }
-  });
-
-  Object.entries(data2).forEach(([key2, value2]) => {
-    difference.push(`${key2}: ${value2} 2`);
-  });
-
-  difference.sort((a, b) => {
-    const [keyA, , indexA] = a.split(' ');
-    const [keyB, , indexB] = b.split(' ');
-    let value;
-
-    if (keyA > keyB) {
-      value = 1;
-    } else if (keyA < keyB) {
-      value = -1;
-    } else if (indexA > indexB) {
-      value = 1;
-    } else if (indexA < indexB) {
-      value = -1;
-    }
-
+const prefix = (value) => {
+  if (value === null || typeof value !== 'object') {
     return value;
+  }
+  const newValue = {};
+  Object.entries(value).forEach(([key, val]) => {
+    newValue[`  ${key}`] = prefix(val);
+  });
+  return newValue;
+};
+
+const compare = (file1, file2) => {
+  const tree1 = { ...file1 };
+  const tree2 = { ...file2 };
+  const diff = {};
+
+  Object.entries(tree1).forEach(([key, value]) => {
+    if (tree2[key] === undefined) {
+      diff[`- ${key}`] = prefix(value);
+    } else {
+      if (_.isEqual(value, tree2[key])) {
+        diff[`  ${key}`] = value;
+      } else if (typeof value === 'object' && typeof tree2[key] === 'object') {
+        diff[`  ${key}`] = compare(value, tree2[key]);
+      } else {
+        diff[`- ${key}`] = prefix(value);
+        diff[`+ ${key}`] = prefix(tree2[key]);
+      }
+      delete tree2[key];
+    }
   });
 
-  return difference;
+  Object.entries(tree2).forEach(([key, value]) => {
+    diff[`+ ${key}`] = prefix(value);
+  });
+
+  return diff;
+};
+
+const sort = (tree) => {
+  const sorted = Object.entries(tree).sort(([prefixedKeyA], [prefixedKeyB]) => {
+    const keyA = prefixedKeyA.substring(2);
+    const keyB = prefixedKeyB.substring(2);
+
+    if (keyA < keyB) {
+      return -1;
+    }
+    if (keyA > keyB) {
+      return 1;
+    }
+    return 0;
+  });
+
+  return sorted.map((node) => {
+    if (node[1] !== null && typeof node[1] === 'object') {
+      return [node[0], sort(node[1])];
+    }
+    return node;
+  });
+};
+
+const getDifference = (file1data, file2data) => {
+  const difference = compare(file1data, file2data);
+  return sort(difference);
 };
 
 export { getDifference, getFileData };

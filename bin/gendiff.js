@@ -4,6 +4,31 @@ import { getDifference, getFileData } from '../src/funcs.js';
 
 const program = new Command();
 
+const output = (data, spaces) => {
+  if (data.length === 2) {
+    if (typeof data[0] === 'string') {
+      if (!Array.isArray(data[1])) {
+        console.log(`${' '.repeat(spaces)}${data[0]}: ${data[1]}`);
+        return;
+      }
+      if (Array.isArray(data[1])) {
+        console.log(`${' '.repeat(spaces)}${data[0]}: {`);
+        output(data[1], spaces + 2);
+        console.log(`${' '.repeat(spaces + 2)}}`);
+        return;
+      }
+    }
+  }
+
+  data.forEach((el) => {
+    if (Array.isArray(el)) {
+      output(el, spaces + 2);
+    } else {
+      console.log(`${' '.repeat(spaces)}${el}: `);
+    }
+  });
+};
+
 program
   .name('gendiff')
   .version('0.0.1')
@@ -15,19 +40,8 @@ program
     const file2data = getFileData(filepath2);
 
     const difference = getDifference(file1data, file2data);
-
     console.log('{');
-    difference.forEach((str) => {
-      const outputStrArr = str.split(' ');
-      let prefix = '   ';
-      if (outputStrArr[2] === '1') {
-        prefix = '  -';
-      } else if (outputStrArr[2] === '2') {
-        prefix = '  +';
-      }
-      console.log(`${prefix} ${outputStrArr[0]} ${outputStrArr[1]}`);
-    });
-
+    output(difference, 0);
     console.log('}');
   });
 
