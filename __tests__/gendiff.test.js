@@ -17,18 +17,17 @@ describe('getDifference', () => {
     const file1 = getFileData(getFixturePath('file3.json'));
     const file2 = getFileData(getFixturePath('file4.json'));
 
-    expect(getDifference(file1, file2)).toEqual([
-      ['- follow', false],
-      ['  host', 'hexlet.io'],
-      ['- proxy', '123.234.53.22'],
-      ['- timeout', 50],
-      ['+ timeout', 20],
-      ['+ verbose', true],
-    ]);
+    expect(getDifference(file1, file2)).toEqual({
+      follow: { value1: false },
+      host: { value1: 'hexlet.io', value2: 'hexlet.io' },
+      proxy: { value1: '123.234.53.22' },
+      timeout: { value1: 50, value2: 20 },
+      verbose: { value2: true },
+    });
   });
 
   test('check empty files comparison', () => {
-    expect(getDifference({}, {})).toEqual([]);
+    expect(getDifference({}, {})).toEqual({});
   });
 });
 
@@ -38,7 +37,7 @@ describe('getFileData', () => {
     const dirname = path.dirname(fileName);
     const getFixturePath = (filename) => path.join(dirname, '..', '__fixtures__', filename);
 
-    expect(getFileData(getFixturePath('file1.yml'))).toEqual(file);
+    expect(getFileData(getFixturePath('file3.yml'))).toEqual(file);
   });
 
   test('throw Error for a wrong file path', () => {
