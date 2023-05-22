@@ -29,10 +29,10 @@ const outputPlain = (tree, path = '') => {
     const value2 = getFormattedValue(tree.value[1]);
     output.push(`Property '${path}' was updated. From ${value1} to ${value2}\n`);
   } else {
-    if (tree.state === 'removed') {
+    if (tree.type === 'removed') {
       output.push(`Property '${path}' was removed\n`);
     }
-    if (tree.state === 'created') {
+    if (tree.type === 'created') {
       const value = getFormattedValue(tree.value);
       output.push(`Property '${path}' was added with value: ${value}\n`);
     }

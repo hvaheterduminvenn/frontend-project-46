@@ -1,67 +1,75 @@
 import isObject from '../utils.js';
 
-const outputObject = (data, spaces) => {
+const DEFAULT_TAB_SIZE = 2;
+
+const getTabString = (depth) => `${(' ').repeat(DEFAULT_TAB_SIZE * depth)}`;
+
+const outputObject = (data, depth) => {
   const output = [];
 
   Object.entries(data).forEach(([key, value]) => {
     if (!isObject(value)) {
-      output.push(`${(' ').repeat(spaces)}  ${key}: ${value}\n`);
+      output.push(`${getTabString(depth)}  ${key}: ${value}\n`);
     } else {
-      output.push(`${(' ').repeat(spaces)}  ${key}: {\n`);
-      output.push(outputObject(value, spaces + 4));
-      output.push(`${(' ').repeat(spaces + 2)}}\n`);
+      output.push(`${getTabString(depth)}  ${key}: {\n`);
+      output.push(outputObject(value, depth + 2));
+      output.push(`${getTabString(depth + 1)}}\n`);
     }
   });
 
   return output.flat();
 };
 
-const handleOutput = (data, sign, spaces) => {
+const handleOutput = (data, sign, depth) => {
   const output = [];
 
   if (data.children) {
-    output.push(`${(' ').repeat(spaces)}${sign}${data.name}: {\n`);
+    output.push(`${getTabString(depth)}${sign}${data.name}: {\n`);
     data.children.forEach((node) => {
-      output.push(composeOutput(node, spaces + 4));
+      output.push(composeOutput(node, depth + 2));
     });
-    output.push(`${(' ').repeat(spaces + 2)}}\n`);
+    output.push(`${getTabString(depth + 1)}}\n`);
   } else if (isObject(data.value)) {
-    output.push(`${(' ').repeat(spaces)}${sign}${data.name}: {\n`);
-    output.push(outputObject(data.value, spaces + 4));
-    output.push(`${(' ').repeat(spaces + 2)}}\n`);
+    output.push(`${getTabString(depth)}${sign}${data.name}: {\n`);
+    output.push(outputObject(data.value, depth + 2));
+    output.push(`${getTabString(depth + 1)}}\n`);
   } else {
-    output.push(`${(' ').repeat(spaces)}${sign}${data.name}: ${data.value}\n`);
+    output.push(`${getTabString(depth)}${sign}${data.name}: ${data.value}\n`);
   }
 
   return output.flat();
 };
 
-const composeOutput = (data, spaces) => {
+const composeOutput = (data, depth) => {
   const output = [];
-  switch (data.state) {
+  switch (data.type) {
     case 'removed': {
-      output.push(handleOutput(data, '- ', spaces));
+      output.push(handleOutput(data, '- ', depth));
       break;
     }
     case 'created': {
-      output.push(handleOutput(data, '+ ', spaces));
+      output.push(handleOutput(data, '+ ', depth));
       break;
     }
     case 'unchanged': {
-      output.push(handleOutput(data, '  ', spaces));
+      output.push(handleOutput(data, '  ', depth));
       break;
     }
     case 'updated': {
       data.value.forEach((value, index) => {
         const sign = index === 0 ? '- ' : '+ ';
         if (isObject(value)) {
-          output.push(`${(' ').repeat(spaces)}${sign}${data.name}: {\n`);
-          output.push(outputObject(value, spaces + 4));
-          output.push(`${(' ').repeat(spaces + 2)}}\n`);
+          output.push(`${getTabString(depth)}${sign}${data.name}: {\n`);
+          output.push(outputObject(value, depth + 2));
+          output.push(`${getTabString(depth + 1)}}\n`);
         } else {
-          output.push(`${(' ').repeat(spaces)}${sign}${data.name}: ${value}\n`);
+          output.push(`${getTabString(depth)}${sign}${data.name}: ${value}\n`);
         }
       });
+      break;
+    }
+    case 'nested': {
+      output.push(handleOutput(data, '  ', depth));
       break;
     }
     default:
@@ -78,7 +86,7 @@ const stylish = (data) => {
 
   const output = ['{\n'];
   data.children.forEach((node) => {
-    output.push(composeOutput(node, 2));
+    output.push(composeOutput(node, 1));
   });
   output.push('}');
 

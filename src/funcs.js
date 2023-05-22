@@ -2,78 +2,85 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import _ from 'lodash';
-import { stylish, plain, json } from './formatters/index.js';
 
-const getFilePathAndExtension = (enteredFilPath) => {
-  const resolvedPath = path.resolve(enteredFilPath);
+const getFilePathAndExtension = (enteredFilePath) => {
+  const resolvedPath = path.resolve(enteredFilePath);
   const fileExtension = path.extname(resolvedPath);
 
-  return { path: resolvedPath, extension: fileExtension };
+  return { path: resolvedPath, extension: fileExtension.slice(1) };
 };
 
-const getFileData = ({ path = '', extension }) => {
-  let content;
+const readFile = (filePath) => fs.readFileSync(filePath, { encoding: 'utf8', flag: 'r' });
+
+const getFileData = (fileContent, extension) => {
+  let data;
 
   switch (extension) {
-    case '.json': {
-      const jsonData = fs.readFileSync(path, { encoding: 'utf8', flag: 'r' });
-      content = JSON.parse(jsonData);
+    case 'json': {
+      data = JSON.parse(fileContent);
       break;
     }
-    case '.yml':
-    case '.yaml': {
-      content = yaml.load(fs.readFileSync(path, { encoding: 'utf8', flag: 'r' }));
+    case 'yml':
+    case 'yaml': {
+      data = yaml.load(fileContent);
       break;
     }
     default:
       throw new Error(`Can not parse ${extension} file extension!`);
   }
 
-  return content;
+  return data;
+};
+
+const getUniqueKeys = (objectA, objectB) => {
+  const uniqueKeys = Object.keys(objectA);
+  Object.keys(objectB).forEach((key) => {
+    if (!uniqueKeys.includes(key)) {
+      uniqueKeys.push(key);
+    }
+  });
+
+  return uniqueKeys.sort();
 };
 
 const compare = (file1, file2, nodeName) => {
   const tree1 = { ...file1 };
   const tree2 = { ...file2 };
+  // node TYPES: created, removed, updated, unchanged, nested
   const diff = {
     name: nodeName,
-    state: 'unchanged',
+    type: 'nested',
     children: [],
   };
 
-  Object.entries(tree1).forEach(([key, value]) => {
-    if (tree2[key] === undefined) {
+  getUniqueKeys(tree1, tree2).forEach((key) => {
+    if (Object.keys(tree1).includes(key) && !Object.keys(tree2).includes(key)) {
       diff.children.push({
         name: key,
-        state: 'removed',
-        value,
+        type: 'removed',
+        value: tree1[key],
+      });
+    } else if (!Object.keys(tree1).includes(key) && Object.keys(tree2).includes(key)) {
+      diff.children.push({
+        name: key,
+        type: 'created',
+        value: tree2[key],
+      });
+    } else if (_.isEqual(tree1[key], tree2[key])) {
+      diff.children.push({
+        name: key,
+        type: 'unchanged',
+        value: tree1[key],
+      });
+    } else if (!_.isObject(tree1[key]) || !_.isObject(tree2[key])) {
+      diff.children.push({
+        name: key,
+        type: 'updated',
+        value: [tree1[key], tree2[key]],
       });
     } else {
-      if (_.isEqual(value, tree2[key])) {
-        diff.children.push({
-          name: key,
-          state: 'unchanged',
-          value,
-        });
-      } else if (typeof value === 'object' && typeof tree2[key] === 'object') {
-        diff.children.push(compare(value, tree2[key], key));
-      } else {
-        diff.children.push({
-          name: key,
-          state: 'updated',
-          value: [value, tree2[key]],
-        });
-      }
-      delete tree2[key];
+      diff.children.push(compare(tree1[key], tree2[key], key));
     }
-  });
-
-  Object.entries(tree2).forEach(([key, value]) => {
-    diff.children.push({
-      name: key,
-      state: 'created',
-      value,
-    });
   });
 
   return diff;
@@ -100,34 +107,9 @@ const getDifference = (file1data, file2data) => {
   return sort({ ...difference });
 };
 
-const genDiff = (enteredFilePath1, enteredFilePath2, formatName = 'stylish') => {
-  const filepath1 = getFilePathAndExtension(enteredFilePath1);
-  const filepath2 = getFilePathAndExtension(enteredFilePath2);
-  const file1data = getFileData(filepath1);
-  const file2data = getFileData(filepath2);
-  const difference = getDifference(file1data, file2data);
-  let formattedOutput = '';
-  switch (formatName) {
-    case 'stylish': {
-      formattedOutput = stylish(difference);
-      break;
-    }
-    case 'plain': {
-      formattedOutput = plain(difference);
-      break;
-    }
-    case 'json': {
-      formattedOutput = json(difference);
-      break;
-    }
-    default:
-      break;
-  }
-  return formattedOutput;
-};
-
 export {
-  getDifference,
+  getFilePathAndExtension,
+  readFile,
   getFileData,
-  genDiff,
+  getDifference,
 };
