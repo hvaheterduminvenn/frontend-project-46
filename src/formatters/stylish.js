@@ -1,4 +1,4 @@
-import isObject from '../utils.js';
+import _ from 'lodash';
 
 const DEFAULT_TAB_SIZE = 2;
 
@@ -8,7 +8,7 @@ const outputObject = (data, depth) => {
   const output = [];
 
   Object.entries(data).forEach(([key, value]) => {
-    if (!isObject(value)) {
+    if (!_.isObject(value)) {
       output.push(`${getTabString(depth)}  ${key}: ${value}\n`);
     } else {
       output.push(`${getTabString(depth)}  ${key}: {\n`);
@@ -29,7 +29,7 @@ const handleOutput = (data, sign, depth) => {
       output.push(composeOutput(node, depth + 2));
     });
     output.push(`${getTabString(depth + 1)}}\n`);
-  } else if (isObject(data.value)) {
+  } else if (_.isObject(data.value)) {
     output.push(`${getTabString(depth)}${sign}${data.name}: {\n`);
     output.push(outputObject(data.value, depth + 2));
     output.push(`${getTabString(depth + 1)}}\n`);
@@ -58,7 +58,7 @@ const composeOutput = (data, depth) => {
     case 'updated': {
       data.value.forEach((value, index) => {
         const sign = index === 0 ? '- ' : '+ ';
-        if (isObject(value)) {
+        if (_.isObject(value)) {
           output.push(`${getTabString(depth)}${sign}${data.name}: {\n`);
           output.push(outputObject(value, depth + 2));
           output.push(`${getTabString(depth + 1)}}\n`);

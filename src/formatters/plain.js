@@ -1,10 +1,10 @@
-import isObject from '../utils.js';
+import _ from 'lodash';
 
 const getFormattedValue = (value) => {
   let formattedValue;
   if (typeof value === 'string') {
     formattedValue = `'${value}'`;
-  } else if (isObject(value)) {
+  } else if (_.isObject(value)) {
     formattedValue = '[complex value]';
   } else {
     formattedValue = value;

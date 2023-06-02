@@ -1,49 +1,59 @@
-import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import _ from 'lodash';
 
-const getFilePathAndExtension = (enteredFilePath) => {
-  const resolvedPath = path.resolve(enteredFilePath);
-  const fileExtension = path.extname(resolvedPath);
+const getFilePathAndType = (enteredFilePath) => {
+  const filePath = path.resolve(enteredFilePath);
+  const fileType = path.extname(filePath).slice(1);
 
-  return { path: resolvedPath, extension: fileExtension.slice(1) };
+  return { filePath, fileType };
 };
 
-const readFile = (filePath) => fs.readFileSync(filePath, { encoding: 'utf8', flag: 'r' });
-
-const getFileData = (fileContent, extension) => {
-  let data;
-
-  switch (extension) {
+const getFileData = (fileContent, fileType) => {
+  switch (fileType) {
     case 'json': {
-      data = JSON.parse(fileContent);
-      break;
+      return JSON.parse(fileContent);
     }
     case 'yml':
     case 'yaml': {
-      data = yaml.load(fileContent);
-      break;
+      return yaml.load(fileContent);
     }
     default:
-      throw new Error(`Can not parse ${extension} file extension!`);
+      throw new Error(`Can not parse ${fileType} file type!`);
   }
-
-  return data;
 };
 
 const getUniqueKeys = (objectA, objectB) => {
-  const uniqueKeys = Object.keys(objectA);
-  Object.keys(objectB).forEach((key) => {
-    if (!uniqueKeys.includes(key)) {
-      uniqueKeys.push(key);
-    }
-  });
+  const uniqueKeysA = Object.keys(objectA);
+  const uniqueKeysB = Object
+    .keys(objectB)
+    .reduce((uniqueKeys, key) => {
+      if (!uniqueKeysA.includes(key)) {
+        uniqueKeys.push(key);
+      }
+      return uniqueKeys;
+    }, []);
 
-  return uniqueKeys.sort();
+  return uniqueKeysA.concat(uniqueKeysB).sort();
 };
 
-const compare = (file1, file2, nodeName) => {
+const sort = (tree) => {
+  if (tree.children) {
+    tree.children.sort((a, b) => {
+      if (a.name > b.name) {
+        return 1;
+      }
+      if (a.name < b.name) {
+        return -1;
+      }
+      return 0;
+    });
+    tree.children.forEach((child) => { sort(child); });
+  }
+  return tree;
+};
+
+const getDifference = (file1, file2, nodeName) => {
   const tree1 = { ...file1 };
   const tree2 = { ...file2 };
   // node TYPES: created, removed, updated, unchanged, nested
@@ -79,37 +89,15 @@ const compare = (file1, file2, nodeName) => {
         value: [tree1[key], tree2[key]],
       });
     } else {
-      diff.children.push(compare(tree1[key], tree2[key], key));
+      diff.children.push(getDifference(tree1[key], tree2[key], key));
     }
   });
 
-  return diff;
-};
-
-const sort = (tree) => {
-  if (tree.children) {
-    tree.children.sort((a, b) => {
-      if (a.name > b.name) {
-        return 1;
-      }
-      if (a.name < b.name) {
-        return -1;
-      }
-      return 0;
-    });
-    tree.children.forEach((child) => { sort(child); });
-  }
-  return tree;
-};
-
-const getDifference = (file1data, file2data) => {
-  const difference = compare(file1data, file2data, 'root');
-  return sort({ ...difference });
+  return sort({ ...diff });
 };
 
 export {
-  getFilePathAndExtension,
-  readFile,
+  getFilePathAndType,
   getFileData,
   getDifference,
 };
