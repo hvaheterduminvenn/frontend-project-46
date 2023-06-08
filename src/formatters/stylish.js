@@ -1,78 +1,72 @@
 import _ from 'lodash';
 
-const DEFAULT_TAB_SIZE = 2;
+const DEFAULT_TAB_SIZE = 4;
+const SIGN_STRING_LENGTH = 2;
 
-const getTabString = (depth) => `${(' ').repeat(DEFAULT_TAB_SIZE * depth)}`;
+const getTabString = (depth, sign) => `${(' ').repeat(DEFAULT_TAB_SIZE * (depth - 1) + DEFAULT_TAB_SIZE - SIGN_STRING_LENGTH)}${sign}`;
 
-const outputObject = (data, depth) => {
+const outputObject = (data, depth, sign) => {
   const output = [];
 
   Object.entries(data).forEach(([key, value]) => {
     if (!_.isObject(value)) {
-      output.push(`${getTabString(depth)}  ${key}: ${value}\n`);
+      output.push(`${getTabString(depth, sign)}${key}: ${value}\n`);
     } else {
-      output.push(`${getTabString(depth)}  ${key}: {\n`);
-      output.push(outputObject(value, depth + 2));
-      output.push(`${getTabString(depth + 1)}}\n`);
+      output.push(`${getTabString(depth, sign)}${key}: {\n`);
+      output.push(outputObject(value, depth + 1, '  '));
+      output.push(`${getTabString(depth, '  ')}}\n`);
     }
   });
 
   return output.flat();
 };
 
-const handleOutput = (data, sign, depth) => {
+const composeOutput = (node, nodeDepth) => {
+  const handleOutput = (data, sign, depth) => {
+    const output = [];
+
+    if (data.children) {
+      output.push(`${getTabString(depth, sign)}${data.name}: {\n`);
+      data.children.forEach((childNode) => {
+        output.push(composeOutput(childNode, depth + 1));
+      });
+      output.push(`${getTabString(depth, '  ')}}\n`);
+    } else if (_.isObject(data.value)) {
+      output.push(`${getTabString(depth, sign)}${data.name}: {\n`);
+      output.push(outputObject(data.value, depth + 1, '  '));
+      output.push(`${getTabString(depth, '  ')}}\n`);
+    } else {
+      output.push(`${getTabString(depth, sign)}${data.name}: ${data.value}\n`);
+    }
+
+    return output.flat();
+  };
+
   const output = [];
-
-  if (data.children) {
-    output.push(`${getTabString(depth)}${sign}${data.name}: {\n`);
-    data.children.forEach((node) => {
-      output.push(composeOutput(node, depth + 2));
-    });
-    output.push(`${getTabString(depth + 1)}}\n`);
-  } else if (_.isObject(data.value)) {
-    output.push(`${getTabString(depth)}${sign}${data.name}: {\n`);
-    output.push(outputObject(data.value, depth + 2));
-    output.push(`${getTabString(depth + 1)}}\n`);
-  } else {
-    output.push(`${getTabString(depth)}${sign}${data.name}: ${data.value}\n`);
-  }
-
-  return output.flat();
-};
-
-const composeOutput = (data, depth) => {
-  const output = [];
-  switch (data.type) {
+  switch (node.type) {
     case 'removed': {
-      output.push(handleOutput(data, '- ', depth));
+      output.push(handleOutput(node, '- ', nodeDepth));
       break;
     }
     case 'created': {
-      output.push(handleOutput(data, '+ ', depth));
-      break;
-    }
-    case 'unchanged': {
-      output.push(handleOutput(data, '  ', depth));
+      output.push(handleOutput(node, '+ ', nodeDepth));
       break;
     }
     case 'updated': {
-      data.value.forEach((value, index) => {
+      node.value.forEach((value, index) => {
         const sign = index === 0 ? '- ' : '+ ';
         if (_.isObject(value)) {
-          output.push(`${getTabString(depth)}${sign}${data.name}: {\n`);
-          output.push(outputObject(value, depth + 2));
-          output.push(`${getTabString(depth + 1)}}\n`);
+          output.push(`${getTabString(nodeDepth, sign)}${node.name}: {\n`);
+          output.push(outputObject(value, nodeDepth + 1, '  '));
+          output.push(`${getTabString(nodeDepth, '  ')}}\n`);
         } else {
-          output.push(`${getTabString(depth)}${sign}${data.name}: ${value}\n`);
+          output.push(`${getTabString(nodeDepth, sign)}${node.name}: ${value}\n`);
         }
       });
       break;
     }
-    case 'nested': {
-      output.push(handleOutput(data, '  ', depth));
-      break;
-    }
     default:
+      output.push(handleOutput(node, '  ', nodeDepth));
       break;
   }
 

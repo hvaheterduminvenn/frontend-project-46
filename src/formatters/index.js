@@ -1,6 +1,5 @@
 import stylish from './stylish.js';
 import plain from './plain.js';
-import json from './json.js';
 
 const getFormattedOutput = (difference, formatName) => {
   let formattedOutput = '';
@@ -14,7 +13,7 @@ const getFormattedOutput = (difference, formatName) => {
       break;
     }
     case 'json': {
-      formattedOutput = json(difference);
+      formattedOutput = JSON.stringify(difference, null, 2);
       break;
     }
     default:

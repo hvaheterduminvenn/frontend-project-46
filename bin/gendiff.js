@@ -14,6 +14,5 @@ program
     const formatName = options.format;
     const diff = genDiff(filepath1, filepath2, formatName);
     console.log(diff);
-  });
-
-program.parse();
+  })
+  .parse();
