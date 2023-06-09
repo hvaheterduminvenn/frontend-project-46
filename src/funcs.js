@@ -100,4 +100,6 @@ export {
   getFilePathAndType,
   getFileData,
   getDifference,
+  getUniqueKeys,
+  sort,
 };
