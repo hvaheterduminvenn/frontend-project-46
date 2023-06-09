@@ -84,7 +84,7 @@ describe('sort():', () => {
         value: 2,
       },
     ],
-  }],[{
+  }], [{
     name: 'someName',
     type: 'nested',
     children: [
@@ -120,12 +120,11 @@ describe('sort():', () => {
     }],
   }]];
 
-
   test.each(cases)(
     'check normal function output with sorting applied',
     (tree, expectedResult) => {
       expect(sort(tree)).toEqual(expectedResult);
-    }
+    },
   );
 
   test('check normal function output with sorting NOT applied to an argument', () => {
@@ -206,7 +205,7 @@ describe('getDifference():', () => {
         children: [{
           name: 'key1',
           type: 'updated',
-          value: [ 'value1', 'value2' ],
+          value: ['value1', 'value2'],
         }],
         name: 'root',
         type: 'nested',
@@ -244,6 +243,6 @@ describe('getDifference():', () => {
     'check non-empty files comparison',
     (file1, file2, expectedResult) => {
       expect(getDifference(file1, file2, 'root')).toEqual(expectedResult);
-    }
+    },
   );
 });
