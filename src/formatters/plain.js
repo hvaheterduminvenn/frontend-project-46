@@ -43,6 +43,6 @@ const outputPlain = (tree, path = '') => {
   return output.flat();
 };
 
-const plain = (tree, path = '') => outputPlain(tree, path).join('');
+const plain = (tree, path = '') => `\n${outputPlain(tree, path).join('')}`;
 
 export default plain;
