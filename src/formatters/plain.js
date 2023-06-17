@@ -1,43 +1,38 @@
 import _ from 'lodash';
 
 const getFormattedValue = (value) => {
-  let formattedValue;
   if (typeof value === 'string') {
-    formattedValue = `'${value}'`;
-  } else if (_.isObject(value)) {
-    formattedValue = '[complex value]';
-  } else {
-    formattedValue = value;
+    return `'${value}'`;
   }
-  return formattedValue;
+  if (_.isObject(value)) {
+    return '[complex value]';
+  }
+  return value;
 };
 
 const outputPlain = (tree, path = '') => {
-  const output = [];
-
   switch (tree.type) {
     case 'nested': {
       const newPath = path ? `${path}.` : path;
-      tree.children.forEach((node) => {
-        output.push(outputPlain(node, `${newPath}${node.name}`));
-      });
-      break;
+      return tree.children
+        .map((node) => outputPlain(node, `${newPath}${node.name}`))
+        .filter((outputString) => outputString !== undefined)
+        .flat();
     }
     case 'updated': {
       const [valueBefore, valueAfter] = tree.value;
-      return [...output, `Property '${path}' was updated. From ${getFormattedValue(valueBefore)} to ${getFormattedValue(valueAfter)}`];
+      return `Property '${path}' was updated. From ${getFormattedValue(valueBefore)} to ${getFormattedValue(valueAfter)}`;
     }
     case 'removed': {
-      return [...output, `Property '${path}' was removed`];
+      return `Property '${path}' was removed`;
     }
     case 'created': {
       const value = getFormattedValue(tree.value);
-      return [...output, `Property '${path}' was added with value: ${value}`];
+      return `Property '${path}' was added with value: ${value}`;
     }
     default: break;
   }
-
-  return output.flat();
+  return undefined;
 };
 
 const plain = (tree, path = '') => outputPlain(tree, path).join('\n');
