@@ -16,54 +16,47 @@ const outputObject = (data, depth, sign) => Object.entries(data)
 
 const composeOutput = (node, nodeDepth) => {
   const handleOutput = (data, sign, depth) => {
-    const output = [];
-
     if (data.children) {
-      output.push(`${getTabString(depth, sign)}${data.name}: {\n`);
-      data.children.forEach((childNode) => {
-        output.push(composeOutput(childNode, depth + 1));
-      });
-      output.push(`${getTabString(depth, '  ')}}\n`);
-    } else if (_.isObject(data.value)) {
-      output.push(`${getTabString(depth, sign)}${data.name}: {\n`);
-      output.push(outputObject(data.value, depth + 1, '  '));
-      output.push(`${getTabString(depth, '  ')}}\n`);
-    } else {
-      output.push(`${getTabString(depth, sign)}${data.name}: ${data.value}\n`);
+      return [
+        `${getTabString(depth, sign)}${data.name}: {\n`,
+        data.children.map((childNode) => composeOutput(childNode, depth + 1)).flat(),
+        `${getTabString(depth, '  ')}}\n`,
+      ].flat();
+    }
+    if (_.isObject(data.value)) {
+      return [
+        `${getTabString(depth, sign)}${data.name}: {\n`,
+        outputObject(data.value, depth + 1, '  '),
+        `${getTabString(depth, '  ')}}\n`,
+      ].flat();
     }
 
-    return output.flat();
+    return `${getTabString(depth, sign)}${data.name}: ${data.value}\n`;
   };
 
-  const output = [];
   switch (node.type) {
     case 'removed': {
-      output.push(handleOutput(node, '- ', nodeDepth));
-      break;
+      return handleOutput(node, '- ', nodeDepth);
     }
     case 'created': {
-      output.push(handleOutput(node, '+ ', nodeDepth));
-      break;
+      return handleOutput(node, '+ ', nodeDepth);
     }
     case 'updated': {
-      node.value.forEach((value, index) => {
+      return node.value.map((value, index) => {
         const sign = index === 0 ? '- ' : '+ ';
         if (_.isObject(value)) {
-          output.push(`${getTabString(nodeDepth, sign)}${node.name}: {\n`);
-          output.push(outputObject(value, nodeDepth + 1, '  '));
-          output.push(`${getTabString(nodeDepth, '  ')}}\n`);
-        } else {
-          output.push(`${getTabString(nodeDepth, sign)}${node.name}: ${value}\n`);
+          return [
+            `${getTabString(nodeDepth, sign)}${node.name}: {\n`,
+            outputObject(value, nodeDepth + 1, '  '),
+            `${getTabString(nodeDepth, '  ')}}\n`,
+          ];
         }
-      });
-      break;
+        return `${getTabString(nodeDepth, sign)}${node.name}: ${value}\n`;
+      }).flat();
     }
     default:
-      output.push(handleOutput(node, '  ', nodeDepth));
-      break;
+      return handleOutput(node, '  ', nodeDepth);
   }
-
-  return output.flat();
 };
 
 const stylish = (data) => {
@@ -71,13 +64,9 @@ const stylish = (data) => {
     return '{}';
   }
 
-  const output = ['{\n'];
-  data.children.forEach((node) => {
-    output.push(composeOutput(node, 1));
-  });
-  output.push('}');
+  const output = data.children.map((node) => composeOutput(node, 1)).flat();
 
-  return output.flat().join('');
+  return ['{\n', output, '}'].flat().join('');
 };
 
 export default stylish;
