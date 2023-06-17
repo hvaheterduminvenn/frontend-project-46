@@ -5,21 +5,14 @@ const SIGN_STRING_LENGTH = 2;
 
 const getTabString = (depth, sign) => `${(' ').repeat(DEFAULT_TAB_SIZE * (depth - 1) + DEFAULT_TAB_SIZE - SIGN_STRING_LENGTH)}${sign}`;
 
-const outputObject = (data, depth, sign) => {
-  const output = [];
-
-  Object.entries(data).forEach(([key, value]) => {
+const outputObject = (data, depth, sign) => Object.entries(data)
+  .map(([key, value]) => {
     if (!_.isObject(value)) {
-      output.push(`${getTabString(depth, sign)}${key}: ${value}\n`);
-    } else {
-      output.push(`${getTabString(depth, sign)}${key}: {\n`);
-      output.push(outputObject(value, depth + 1, '  '));
-      output.push(`${getTabString(depth, '  ')}}\n`);
+      return `${getTabString(depth, sign)}${key}: ${value}\n`;
     }
-  });
-
-  return output.flat();
-};
+    return `${getTabString(depth, sign)}${key}: {\n${outputObject(value, depth + 1, '  ')}${getTabString(depth, '  ')}}\n`;
+  })
+  .flat();
 
 const composeOutput = (node, nodeDepth) => {
   const handleOutput = (data, sign, depth) => {
