@@ -25,17 +25,14 @@ const outputPlain = (tree, path = '') => {
     }
     case 'updated': {
       const [valueBefore, valueAfter] = tree.value;
-      output.push(`Property '${path}' was updated. From ${getFormattedValue(valueBefore)} to ${getFormattedValue(valueAfter)}`);
-      break;
+      return [...output, `Property '${path}' was updated. From ${getFormattedValue(valueBefore)} to ${getFormattedValue(valueAfter)}`];
     }
     case 'removed': {
-      output.push(`Property '${path}' was removed`);
-      break;
+      return [...output, `Property '${path}' was removed`];
     }
     case 'created': {
       const value = getFormattedValue(tree.value);
-      output.push(`Property '${path}' was added with value: ${value}`);
-      break;
+      return [...output, `Property '${path}' was added with value: ${value}`];
     }
     default: break;
   }

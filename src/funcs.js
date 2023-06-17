@@ -29,26 +29,28 @@ const getUniqueKeys = (objectA, objectB) => {
     .keys(objectB)
     .reduce((uniqueKeys, key) => {
       if (!uniqueKeysA.includes(key)) {
-        uniqueKeys.push(key);
+        return [...uniqueKeys, key];
       }
       return uniqueKeys;
     }, []);
 
-  return uniqueKeysA.concat(uniqueKeysB).sort();
+  return [...uniqueKeysA.concat(uniqueKeysB)].sort();
 };
 
 const sort = (tree) => {
   if (tree.children) {
-    tree.children.sort((a, b) => {
-      if (a.name > b.name) {
-        return 1;
-      }
-      if (a.name < b.name) {
-        return -1;
-      }
-      return 0;
-    });
-    tree.children.forEach((child) => { sort(child); });
+    return {
+      ...tree,
+      children: [...tree.children].sort((a, b) => {
+        if (a.name > b.name) {
+          return 1;
+        }
+        if (a.name < b.name) {
+          return -1;
+        }
+        return 0;
+      }),
+    };
   }
   return tree;
 };
@@ -65,31 +67,46 @@ const getDifference = (file1, file2, nodeName) => {
 
   getUniqueKeys(tree1, tree2).forEach((key) => {
     if (Object.keys(tree1).includes(key) && !Object.keys(tree2).includes(key)) {
-      diff.children.push({
-        name: key,
-        type: 'removed',
-        value: tree1[key],
-      });
+      diff.children = [
+        ...diff.children,
+        {
+          name: key,
+          type: 'removed',
+          value: tree1[key],
+        },
+      ];
     } else if (!Object.keys(tree1).includes(key) && Object.keys(tree2).includes(key)) {
-      diff.children.push({
-        name: key,
-        type: 'created',
-        value: tree2[key],
-      });
+      diff.children = [
+        ...diff.children,
+        {
+          name: key,
+          type: 'created',
+          value: tree2[key],
+        },
+      ];
     } else if (_.isEqual(tree1[key], tree2[key])) {
-      diff.children.push({
-        name: key,
-        type: 'unchanged',
-        value: tree1[key],
-      });
+      diff.children = [
+        ...diff.children,
+        {
+          name: key,
+          type: 'unchanged',
+          value: tree1[key],
+        },
+      ];
     } else if (!_.isObject(tree1[key]) || !_.isObject(tree2[key])) {
-      diff.children.push({
-        name: key,
-        type: 'updated',
-        value: [tree1[key], tree2[key]],
-      });
+      diff.children = [
+        ...diff.children,
+        {
+          name: key,
+          type: 'updated',
+          value: [tree1[key], tree2[key]],
+        },
+      ];
     } else {
-      diff.children.push(getDifference(tree1[key], tree2[key], key));
+      diff.children = [
+        ...diff.children,
+        getDifference(tree1[key], tree2[key], key),
+      ];
     }
   });
 

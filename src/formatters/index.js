@@ -2,25 +2,21 @@ import stylish from './stylish.js';
 import plain from './plain.js';
 
 const getFormattedOutput = (difference, formatName) => {
-  let formattedOutput = '';
   switch (formatName) {
     case 'stylish': {
-      formattedOutput = stylish(difference);
-      break;
+      return stylish(difference);
     }
     case 'plain': {
-      formattedOutput = plain(difference);
-      break;
+      return plain(difference);
     }
     case 'json': {
-      formattedOutput = JSON.stringify(difference, null, 2);
-      break;
+      return JSON.stringify(difference, null, 2);
     }
     default:
       break;
   }
 
-  return formattedOutput;
+  return undefined;
 };
 
 export default getFormattedOutput;
