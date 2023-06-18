@@ -24,17 +24,18 @@ const getFileData = (fileContent, fileType) => {
 };
 
 const getUniqueKeys = (objectA, objectB) => {
-  const uniqueKeysA = Object.keys(objectA);
+  const uniqueKeysA = Object.keys(objectA).sort();
   const uniqueKeysB = Object
     .keys(objectB)
+    .sort()
     .reduce((uniqueKeys, key) => {
       if (!uniqueKeysA.includes(key)) {
-        uniqueKeys.push(key);
+        return [...uniqueKeys, key];
       }
       return uniqueKeys;
     }, []);
 
-  return [...(uniqueKeysA.concat(uniqueKeysB))].sort();
+  return uniqueKeysA.concat(uniqueKeysB);
 };
 
 const sort = (tree) => {
